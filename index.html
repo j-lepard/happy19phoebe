@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Eastern Canada Rail Adventure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --spruce: #173B34;
+    --spruce-deep: #0F2924;
+    --paper: #F2EDE3;
+    --mist: #B9C9C2;
+    --brass: #C9A227;
+    --signal: #D2492F;
+    --rail-h: 15vh;
+    --display: "Big Shoulders Display", "Arial Narrow", "Helvetica Neue", sans-serif;
+    --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--spruce-deep);
+    color: var(--paper);
+    font-family: var(--body);
+    font-size: clamp(1rem, 1.55vw, 2.1rem);
+    line-height: 1.5;
+    overflow: hidden;
+  }
+  a { color: var(--brass); text-underline-offset: 0.18em; text-decoration-thickness: 0.06em; }
+  a:hover { color: var(--paper); }
+  :focus-visible { outline: 3px solid var(--brass); outline-offset: 4px; }
+
+  /* ---------- Slides ---------- */
+  .deck { position: fixed; inset: 0 0 var(--rail-h) 0; }
+  .slide {
+    position: absolute; inset: 0;
+    padding: 7vh 7vw 4vh;
+    display: grid; align-content: center;
+    background: var(--spruce);
+    opacity: 0; visibility: hidden;
+    transition: opacity 600ms ease, visibility 0s linear 600ms;
+  }
+  .slide.active { opacity: 1; visibility: visible; transition: opacity 600ms ease; }
+
+  h1, h2, .station {
+    font-family: var(--display);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.01em;
+  }
+  h1 { font-size: clamp(3.5rem, 8.5vw, 12rem); }
+  h2 { font-size: clamp(2.5rem, 5.2vw, 7.5rem); margin-bottom: 0.35em; }
+  h3 {
+    font-family: var(--display); font-weight: 700;
+    font-size: 1.35em; color: var(--brass); margin-bottom: 0.3em;
+  }
+  .lead { font-size: 1.3em; max-width: 34ch; color: var(--paper); }
+  .muted { color: var(--mist); }
+  p + p { margin-top: 0.8em; }
+
+  /* ---------- Landing ---------- */
+  .landing { grid-template-columns: 1.05fr 1fr; gap: 5vw; align-items: center; }
+  .landing .lead { margin-top: 0.6em; }
+  .landing .cue { margin-top: 2.2em; font-size: 0.85em; color: var(--mist); }
+  .hero-photo {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    max-height: 72vh;
+    justify-self: end;
+    width: 100%;
+    background: var(--spruce-deep) center / cover no-repeat;
+    border: 0.5vw solid var(--paper);
+    /*box-shadow: 1.2vw 1.2vw 0 var(--brass);*/
+  }
+  .hero-photo.has-image .hero-empty { display: none; }
+  .hero-empty {
+    position: absolute; inset: 0;
+    display: grid; place-content: center; text-align: center; gap: 0.8em;
+    padding: 2vw;
+    border: 2px dashed var(--mist);
+    margin: 1.2vw;
+    color: var(--mist);
+  }
+  .hero-empty button {
+    font: inherit; font-weight: 600;
+    background: var(--brass); color: var(--spruce-deep);
+    border: 0; padding: 0.55em 1.2em; cursor: pointer; justify-self: center;
+  }
+  .hero-empty .hint { font-size: 0.7em; max-width: 26ch; }
+  .hero-photo .swap {
+    position: absolute; right: 1vw; bottom: 1vw;
+    font: inherit; font-size: 0.6em;
+    background: rgba(15, 41, 36, 0.8); color: var(--paper);
+    border: 1px solid var(--mist); padding: 0.3em 0.8em; cursor: pointer;
+    opacity: 0; transition: opacity 200ms;
+  }
+  .hero-photo.has-image:hover .swap, .hero-photo .swap:focus-visible { opacity: 1; }
+
+  /* ---------- Two-column content ---------- */
+  .split { grid-template-columns: 1fr 1.25fr; gap: 6vw; align-items: center; }
+  ul.plain { list-style: none; }
+  ul.plain li { padding-left: 1.1em; position: relative; margin-bottom: 0.45em; }
+  ul.plain li::before {
+    content: ""; position: absolute; left: 0; top: 0.62em;
+    width: 0.45em; height: 0.45em; border-radius: 50%; background: var(--brass);
+  }
+
+  /* ---------- Departures board ---------- */
+  .board { width: 100%; border-collapse: collapse; font-size: 1.05em; }
+  .board th {
+    text-align: left; font-family: var(--display); font-weight: 700;
+    color: var(--brass); font-size: 1.1em;
+    padding: 0 1em 0.5em 0; border-bottom: 2px solid var(--brass);
+  }
+  .board td { padding: 0.55em 1em 0.55em 0; border-bottom: 1px solid rgba(185, 201, 194, 0.25); }
+  .board td:first-child { font-family: var(--display); font-weight: 700; font-size: 1.35em; }
+  .board tr.total td { border-bottom: 0; border-top: 2px solid var(--brass); font-weight: 600; }
+  .board td.num { white-space: nowrap; }
+
+  /* ---------- Stop slides ---------- */
+  .stop { grid-template-columns: 0.9fr 1.3fr; gap: 6vw; align-items: center; }
+  .station { font-size: clamp(4rem, 10vw, 14rem); }
+  .stop .when { margin-top: 0.5em; font-size: 1.15em; color: var(--brass); }
+  .stop .getting { margin-top: 0.6em; color: var(--mist); max-width: 26ch; }
+  .stop-detail { display: grid; gap: 1.6em; }
+
+  /* ---------- Ocean ---------- */
+  .ocean { background: #12324A; }
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3vw; margin-top: 1.5em; }
+  .fact .big { font-family: var(--display); font-weight: 800; font-size: 2.2em; line-height: 1; color: var(--paper); }
+  .fact .small { color: var(--mist); }
+  .ocean .classes { display: grid; grid-template-columns: 1fr 1fr; gap: 3vw; margin-top: 2em; max-width: 70vw; }
+
+  /* ---------- Checklist ---------- */
+  .checklist { list-style: none; columns: 2; column-gap: 5vw; }
+  .checklist li { break-inside: avoid; margin-bottom: 0.7em; }
+  .checklist label { display: flex; gap: 0.7em; align-items: flex-start; cursor: pointer; }
+  .checklist input {
+    appearance: none; flex: none;
+    width: 1.1em; height: 1.1em; margin-top: 0.22em;
+    border: 2px solid var(--brass); background: transparent; cursor: pointer;
+  }
+  .checklist input:checked { background: var(--brass); box-shadow: inset 0 0 0 0.18em var(--spruce); }
+  .checklist input:checked + span { color: var(--mist); text-decoration: line-through; }
+
+  /* ---------- Rail progress ---------- */
+  .rail {
+    position: fixed; left: 0; right: 0; bottom: 0; height: var(--rail-h);
+    background: var(--spruce-deep);
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2vw;
+    padding: 0 3vw;
+  }
+  .rail button.nav {
+    font: inherit; font-size: 0.8em; color: var(--paper);
+    background: transparent; border: 1px solid rgba(185, 201, 194, 0.4);
+    padding: 0.4em 1em; cursor: pointer;
+  }
+  .rail button.nav:disabled { opacity: 0.3; cursor: default; }
+  .track { position: relative; height: 100%; }
+  .track-line, .track-done {
+    position: absolute; top: 42%; height: 0.45vh; min-height: 3px; left: 4%;
+    background: rgba(185, 201, 194, 0.35);
+  }
+  .track-line { right: 4%; }
+  .track-done { background: var(--signal); width: 0; transition: width 800ms ease; }
+  .stn {
+    position: absolute; top: 42%; width: 0; height: 0;
+    background: none; border: 0; padding: 0; cursor: pointer; color: var(--mist);
+    font-family: var(--display); font-weight: 700; font-size: 0.85em;
+  }
+  .stn::before {
+    content: ""; position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
+    width: 1.3vw; height: 1.3vw; min-width: 12px; min-height: 12px;
+    border-radius: 50%; background: var(--spruce-deep); border: 3px solid var(--mist);
+  }
+  .stn span {
+    position: absolute; top: 3.2vh; left: 0; transform: translateX(-50%);
+    white-space: nowrap; padding: 0.2em 0.4em;
+  }
+  .stn.passed { color: var(--paper); }
+  .stn.passed::before { border-color: var(--signal); background: var(--signal); }
+  .train {
+    position: absolute; top: 42%; transform: translate(-50%, -50%);
+    width: 3.2vw; height: 1.6vw; min-width: 30px; min-height: 15px; border-radius: 0.5vw;
+    background: var(--paper); border: 3px solid var(--signal);
+    transition: left 800ms ease; pointer-events: none;
+  }
+  .counter { position: absolute; right: 3vw; bottom: 1.2vh; font-size: 0.65em; color: var(--mist); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide, .slide.active, .track-done, .train { transition: none; }
+  }
+  @media (max-width: 800px) {
+    body { overflow: auto; }
+    .landing, .split, .stop { grid-template-columns: 1fr; }
+    .hero-photo { justify-self: stretch; max-height: 50vh; }
+    .facts, .ocean .classes { grid-template-columns: 1fr; }
+    .checklist { columns: 1; }
+    .slide { overflow-y: auto; align-content: start; }
+  }
+</style>
+</head>
+<body>
+
+<main class="deck" id="deck">
+
+  <!-- 1. Landing -->
+  <section class="slide landing" data-pos="0" aria-label="Welcome">
+    <div>
+      <h1 id="greeting">Happy 19th birthday</h1>
+      <p class="lead">Your gift is two weeks crossing Eastern Canada by train, from Toronto to the Atlantic.</p>
+      <p class="cue">Press the "Next" arrow to begin.</p>
+    </div>
+    <figure class="hero-photo" id="heroPhoto">
+      <div class="hero-empty">
+        <p>Your photo goes here</p>
+        <button type="button" id="pickPhoto">Choose a photo</button>
+        <p class="hint">To keep a photo permanently, set heroImage at the top of the script.</p>
+      </div>
+      <button type="button" class="swap" id="swapPhoto">Change photo</button>
+      <input type="file" id="photoInput" accept="image/*" hidden>
+    </figure>
+  </section>
+
+  <!-- 2. The gift -->
+  <section class="slide split" data-pos="0" aria-label="The gift">
+    <h2>A trip built around trains</h2>
+    <div>
+      <p class="lead">Five cities, 13 nights and one overnight train to the ocean.</p>
+      <p>You'll travel on your own between cities, with group tours and hostel events at every stop, so there's always someone to explore with.</p>
+      <p>This is a starting plan. The dates, extra stops and details are yours to decide.</p>
+    </div>
+  </section>
+
+  <!-- 3. Route -->
+  <section class="slide" data-pos="0" aria-label="The route">
+    <h2>The route</h2>
+    <table class="board">
+      <thead><tr><th>Stop</th><th>Days</th><th>Nights</th><th>Getting there</th></tr></thead>
+      <tbody>
+        <tr><td>Toronto</td><td>1–3</td><td>3</td><td>Fly from Vancouver</td></tr>
+        <tr><td>Ottawa</td><td>4–5</td><td>2</td><td>Train, about 4.5 hours</td></tr>
+        <tr><td>Quebec City</td><td>6–8</td><td>3</td><td>Train via Montreal</td></tr>
+        <tr><td>Montreal</td><td>9–10</td><td>2</td><td>Train, about 3.5 hours</td></tr>
+        <tr><td>The Ocean</td><td>11</td><td>1</td><td>Overnight train to Halifax</td></tr>
+        <tr><td>Halifax</td><td>12–14</td><td>2</td><td>Fly home on day 14</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 4. Toronto -->
+  <section class="slide stop" data-pos="1" aria-label="Toronto">
+    <div>
+      <div class="station">Toronto</div>
+      <p class="when">Days 1–3</p>
+      <p class="getting">Fly in from Vancouver and settle into the hostel.</p>
+    </div>
+    <div class="stop-detail">
+      <div>
+        <h3>Things to do</h3>
+        <ul class="plain">
+          <li>CN Tower and the waterfront</li>
+          <li>Kensington Market</li>
+          <li>Ferry to the Toronto Islands</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Meet people</h3>
+        <p>Join the hostel's pub night or walking tour on your first evening.</p>
+      </div>
+      <div>
+        <h3>Stay</h3>
+        <p><a href="https://www.hostelz.com/hostels/Canada/Toronto/church-street" target="_blank" rel="noopener">Compare downtown hostels</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Ottawa -->
+  <section class="slide stop" data-pos="2" aria-label="Ottawa">
+    <div>
+      <div class="station">Ottawa</div>
+      <p class="when">Days 4–5</p>
+      <p class="getting">Morning train from Toronto, about 4.5 hours.</p>
+    </div>
+    <div class="stop-detail">
+      <div>
+        <h3>Things to do</h3>
+        <ul class="plain">
+          <li>Parliament Hill</li>
+          <li>ByWard Market</li>
+          <li>Walk or cycle the Rideau Canal</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Meet people</h3>
+        <p>The hostel runs a free tour of the old jail it's built in, plus other group activities.</p>
+      </div>
+      <div>
+        <h3>Stay</h3>
+        <p><a href="https://saintlo.ca/en/ottawa-jail" target="_blank" rel="noopener">Saintlo Ottawa Jail Hostel</a>, a 150-year-old prison with free breakfast</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Quebec City -->
+  <section class="slide stop" data-pos="3" aria-label="Quebec City">
+    <div>
+      <div class="station">Quebec City</div>
+      <p class="when">Days 6–8</p>
+      <p class="getting">Train via Montreal, most of the day.</p>
+    </div>
+    <div class="stop-detail">
+      <div>
+        <h3>Things to do</h3>
+        <ul class="plain">
+          <li>Old Quebec and the city walls</li>
+          <li>Château Frontenac and Petit-Champlain</li>
+          <li>Day trip to Montmorency Falls</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Meet people</h3>
+        <p>Daily pub crawls, walking tours and Montmorency Falls trips from the hostel.</p>
+      </div>
+      <div>
+        <h3>Stay</h3>
+        <p><a href="https://hihostels.ca/quebec" target="_blank" rel="noopener">HI Québec</a>, inside the old city walls</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Montreal -->
+  <section class="slide stop" data-pos="4" aria-label="Montreal">
+    <div>
+      <div class="station">Montreal</div>
+      <p class="when">Days 9–10</p>
+      <p class="getting">Train from Quebec City, about 3.5 hours.</p>
+    </div>
+    <div class="stop-detail">
+      <div>
+        <h3>Things to do</h3>
+        <ul class="plain">
+          <li>Old Port and Old Montreal</li>
+          <li>Hike up Mount Royal</li>
+          <li>The Plateau and the Lachine Canal</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Meet people</h3>
+        <p>The hostel runs pub crawls, bike tours and group walks up Mount Royal.</p>
+      </div>
+      <div>
+        <h3>Stay</h3>
+        <p><a href="https://saintlo.ca/en/montreal/" target="_blank" rel="noopener">Saintlo Montréal</a>, downtown with a café-bar and free breakfast</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. The Ocean -->
+  <section class="slide ocean" data-pos="5" aria-label="The Ocean">
+    <h2>The Ocean, overnight to Halifax</h2>
+    <p class="lead">Running since 1904, one of the oldest named trains in North America.</p>
+    <div class="facts">
+      <div class="fact"><div class="big">21–24 hrs</div><div class="small">Montreal to Halifax</div></div>
+      <div class="fact"><div class="big">Wed, Fri, Sun</div><div class="small">Early-evening departures from Montreal</div></div>
+      <div class="fact"><div class="big">Next afternoon</div><div class="small">Arrive in Halifax after a night on board</div></div>
+    </div>
+    <div class="classes">
+      <div>
+        <h3>Economy</h3>
+        <p>Reclining seat, food to buy on board. Seen from about $150 to $280 one way.</p>
+      </div>
+      <div>
+        <h3>Sleeper Plus</h3>
+        <p>Your own berth or cabin with meals included. The upgrade if you want the full overnight-train experience.</p>
+      </div>
+    </div>
+    <p style="margin-top:1.6em"><a href="https://www.viarail.ca/en/explore-our-destinations/trains/atlantic-canada/montreal-halifax-ocean" target="_blank" rel="noopener">See The Ocean on VIA Rail</a></p>
+  </section>
+
+  <!-- 9. Halifax -->
+  <section class="slide stop" data-pos="6" aria-label="Halifax">
+    <div>
+      <div class="station">Halifax</div>
+      <p class="when">Days 12–14</p>
+      <p class="getting">Arrive mid-afternoon and walk to the hostel from the station.</p>
+    </div>
+    <div class="stop-detail">
+      <div>
+        <h3>Things to do</h3>
+        <ul class="plain">
+          <li>The harbour waterfront</li>
+          <li>Citadel Hill</li>
+          <li>Peggy's Cove lighthouse at sunset</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Meet people</h3>
+        <p>Hostel jam nights and pub crawls, plus a <a href="https://www.seesight-tours.com/tours/peggys-cove-sunset-tour" target="_blank" rel="noopener">small-group Peggy's Cove tour</a>.</p>
+      </div>
+      <div>
+        <h3>Stay</h3>
+        <p><a href="https://www.hihostels.ca/halifax" target="_blank" rel="noopener">HI Halifax Heritage House</a>, near the station with a rooftop patio</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. Budget -->
+  <section class="slide split" data-pos="6" aria-label="Budget">
+    <div>
+      <h2>What the gift covers</h2>
+      <p class="muted">Estimates in Canadian dollars. Flights and daily food are extra.</p>
+    </div>
+    <table class="board">
+      <tbody>
+        <tr><td>Trains between cities</td><td class="num">$250–400</td></tr>
+        <tr><td>The Ocean, economy</td><td class="num">$150–300</td></tr>
+        <tr><td>Hostels, 13 nights</td><td class="num">$650–900</td></tr>
+        <tr><td>Tours and day trips</td><td class="num">$300–400</td></tr>
+        <tr class="total"><td>Core trip</td><td class="num">$1,350–2,000</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 11. When to go -->
+  <section class="slide split" data-pos="6" aria-label="When to go">
+    <div>
+      <h2>When to go</h2>
+      <p class="lead">Late May to June 2027: warm weather, busy hostels and lower prices than midsummer.</p>
+    </div>
+    <ul class="plain">
+      <li>Early fall is the alternative, with autumn colours along The Ocean's route.</li>
+      <li>Book The Ocean first, since it runs only three days a week.</li>
+      <li>Use VIA's Escape fares for the city-to-city trains.</li>
+      <li>Watch for youth discounts for ages 18 to 24, like the <a href="https://www.viarail.ca/en/offers/canada-strong-pass" target="_blank" rel="noopener">Canada Strong Pass</a>.</li>
+      <li>Book hostels on their own websites for the best rates.</li>
+    </ul>
+  </section>
+
+  <!-- 12. Your turn -->
+  <section class="slide" data-pos="6" aria-label="Your turn">
+    <h2>Your turn</h2>
+    <p class="lead" style="margin-bottom:1.4em">The rest is yours to plan.</p>
+    <ul class="checklist">
+      <li><label><input type="checkbox"><span>Pick dates around a Wednesday, Friday or Sunday Ocean departure</span></label></li>
+      <li><label><input type="checkbox"><span>Choose an economy seat or a sleeper berth</span></label></li>
+      <li><label><input type="checkbox"><span>Book The Ocean</span></label></li>
+      <li><label><input type="checkbox"><span>Book flights to Toronto and home from Halifax</span></label></li>
+      <li><label><input type="checkbox"><span>Book the city-to-city trains</span></label></li>
+      <li><label><input type="checkbox"><span>Book your hostels</span></label></li>
+      <li><label><input type="checkbox"><span>Pick a tour or day trip in each city</span></label></li>
+      <li><label><input type="checkbox"><span>Change anything you like</span></label></li>
+    </ul>
+  </section>
+
+</main>
+
+<!-- Rail progress: the route itself -->
+<nav class="rail" aria-label="Trip progress">
+  <button class="nav" id="prev" type="button" aria-label="Previous slide">Back</button>
+  <div class="track" id="track">
+    <div class="track-line"></div>
+    <div class="track-done" id="trackDone"></div>
+    <!-- station buttons and train are added by script -->
+    <div class="train" id="train" aria-hidden="true"></div>
+  </div>
+  <button class="nav" id="next" type="button" aria-label="Next slide">Next</button>
+  <div class="counter" id="counter"></div>
+</nav>
+
+<script>
+  /* =========================================================
+     EDIT THESE TWO LINES TO PERSONALISE THE PRESENTATION
+     name:      her first name, e.g. "Emma" (leave "" for none)
+     heroImage: a photo file next to this HTML file, e.g. "her-photo.jpg",
+                or a full image URL. Leave "" to show the placeholder.
+     ========================================================= */
+  const CONFIG = {
+    name: "Phoebe",
+    heroImage: "train_image.jpg"
+  };
+
+  // Stations along the bottom rail. "slide" is which slide each one jumps to.
+  const STATIONS = [
+    { label: "Toronto",     slide: 3 },
+    { label: "Ottawa",      slide: 4 },
+    { label: "Quebec City", slide: 5 },
+    { label: "Montreal",    slide: 6 },
+    { label: "The Ocean",   slide: 7 },
+    { label: "Halifax",     slide: 8 }
+  ];
+
+  const slides = Array.from(document.querySelectorAll(".slide"));
+  const track = document.getElementById("track");
+  const train = document.getElementById("train");
+  const trackDone = document.getElementById("trackDone");
+  const counter = document.getElementById("counter");
+  const prevBtn = document.getElementById("prev");
+  const nextBtn = document.getElementById("next");
+
+  // Station x-positions (percent of the track width)
+  const START = 4, END = 96;
+  const stationX = i => START + (END - START) * (i / (STATIONS.length - 1));
+
+  const stationEls = STATIONS.map((s, i) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "stn";
+    b.style.left = stationX(i) + "%";
+    const t = document.createElement("span"); t.textContent = s.label; b.appendChild(t);
+    b.addEventListener("click", () => go(s.slide));
+    track.insertBefore(b, train);
+    return b;
+  });
+
+  let current = 0;
+
+  function go(n) {
+    n = Math.max(0, Math.min(slides.length - 1, n));
+    slides[current].classList.remove("active");
+    current = n;
+    slides[current].classList.add("active");
+
+    // data-pos: 0 = before Toronto, 1..6 = at that station
+    const pos = Number(slides[current].dataset.pos);
+    const x = pos === 0 ? START : stationX(pos - 1);
+    train.style.left = x + "%";
+    trackDone.style.width = (x - START) + "%";
+    stationEls.forEach((el, i) => el.classList.toggle("passed", pos > 0 && i <= pos - 1));
+
+    counter.textContent = (current + 1) + " of " + slides.length;
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    history.replaceState(null, "", "#" + (current + 1));
+  }
+
+  prevBtn.addEventListener("click", () => go(current - 1));
+  nextBtn.addEventListener("click", () => go(current + 1));
+
+  document.addEventListener("keydown", e => {
+    if (e.target.matches("input, textarea")) return;
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(k)) { e.preventDefault(); go(current + 1); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); go(current - 1); }
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1);
+    else if (k === "f" || k === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  });
+
+  // ---------- Personalisation ----------
+  if (CONFIG.name.trim()) {
+    document.getElementById("greeting").textContent = "Happy 19th birthday, " + CONFIG.name.trim();
+  }
+
+  const hero = document.getElementById("heroPhoto");
+  const input = document.getElementById("photoInput");
+  function setHero(src) {
+    hero.style.backgroundImage = "url('" + src + "')";
+    hero.classList.add("has-image");
+  }
+  if (CONFIG.heroImage.trim()) setHero(CONFIG.heroImage.trim());
+
+  document.getElementById("pickPhoto").addEventListener("click", () => input.click());
+  document.getElementById("swapPhoto").addEventListener("click", () => input.click());
+  input.addEventListener("change", () => {
+    const file = input.files && input.files[0];
+    if (file) setHero(URL.createObjectURL(file));
+  });
+
+  // Start on the slide in the URL (e.g. #4), otherwise the first
+  const start = parseInt(location.hash.slice(1), 10);
+  go(Number.isFinite(start) ? start - 1 : 0);
+</script>
+</body>
+</html>
